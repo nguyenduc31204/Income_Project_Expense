@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const xlsx = require('xlsx')
 const Income = require('../models/Income');
 
 
@@ -29,10 +30,44 @@ exports.addIncome = async (req, res) => {
 }
 
 //get all income
-exports.getAllIncome = async (req, res) => {}
+exports.getAllIncome = async (req, res) => {
+    const userId = req.user.id;
+    try {
+        const income = await Income.find({userId}).sort({ date: -1});
+        res.json(income);
+    } catch(err) {
+        res.status(500).json({message: "sever error"})
+    }
+}
 
 //delete income
-exports.deleteIncome = async (req, res) => {}
+exports.deleteIncome = async (req, res) => {
+    try{
+        await Income.findByIdAndDelete(req.params.id);
+        res.json({ message: "Đã xóa Thành công"})
+    } catch (err){
+        res.status(500).json({message: "sever error"})
+    }
+}
 
 //dowload income
-exports.downloadIncomeExcel = async (req, res) => {}
+exports.downloadIncomeExcel = async (req, res) => {
+    const userId = req.user.id;
+    try{
+        const income = await Income.find({userId}).sort({ date: -1});
+
+        const data = income.map((item) => ({
+            Source: item.source,
+            Amount: item.amount,
+            Date: item.date,
+        }))
+
+        const wb = xlsx.utils.book_new();
+        const ws = xlsx.utils.json_to_sheet(data);
+        xlsx.utils.book_append_sheet(wb, ws, "Income");
+        xlsx.writeFile(wb, 'income_detail.xlsx');
+        res.download('income_detail.xlsx');
+    } catch(err){
+        res.status(500).json({message: "sever error"})
+    }
+}
