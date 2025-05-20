@@ -3,6 +3,8 @@ import AuthLayout from '../../components/layouts/AuthLayout'
 import { useNavigate, Link } from 'react-router-dom'
 import Input from '../../components/inputs/Input'
 import { validateEmail } from '../../utils/help'
+import axiosInstance from '../../utils/axiosInstance'
+import { API_PATHS } from '../../utils/apiPaths'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -24,6 +26,28 @@ const Login = () => {
     }
 
     setError("");
+      console.log("route", API_PATHS.AUTH.LOGIN)
+
+    try{
+      const response = await axiosInstance.post(API_PATHS.AUTH.LOGIN, {
+        email,
+        password,
+      });
+
+      const { token, user } = response.data;
+
+      if(token) {
+        localStorage.setItem("token", token);
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      if(error.response && error.response.data.message) {
+        setError(error.response.data.message);
+      } else {
+        setError("Có lỗi xảy ra", error)
+      }
+    }
+
   }
 
   return (
